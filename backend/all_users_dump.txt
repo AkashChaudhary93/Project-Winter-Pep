@@ -1,0 +1,18 @@
+## All Users Debug
+| ID | Name | Role | Phone |
+| :--- | :--- | :--- | :--- |
+| 1 | Amul Parlour | VENDOR | 9998887771 |
+| 2 | Baskin Robbins | VENDOR | 9998887772 |
+| 3 | Rolls King | VENDOR | 9998887773 |
+| 4 | Chai Point | VENDOR | 9998887774 |
+| 5 | Momo Mia | VENDOR | 9998887775 |
+| 6 | UniCafe & Bistro | VENDOR | 9998887776 |
+| 7 | Engineer's Junction | VENDOR | 9998887777 |
+| 8 | Home Plate | VENDOR | 9998887778 |
+| 9 | Fit & Fuel | VENDOR | 9998887779 |
+| 10 | The Night Owl | VENDOR | 9998887780 |
+| 11 | The Pink Bakery | VENDOR | 9998887781 |
+| 12 | Gourmet Garden | VENDOR | 9998887782 |
+| 13 | khalo | VENDOR | 7777777777 |
+| 14 | kahao piyo | VENDOR | 2222222222 |
+| 15 | buub | VENDOR | 2222222252 |

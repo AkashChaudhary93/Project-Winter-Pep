@@ -1,0 +1,20 @@
+# Server Configuration
+server.port=9999
+
+# Database Configuration (Supabase / PostgreSQL)
+spring.datasource.url=jdbc:postgresql://db.mhwhqrimtnycxogroarg.supabase.co:5432/postgres
+spring.datasource.username=postgres
+spring.datasource.password=Akash@9368644199
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA / Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+# Disable data.sql to prevent duplicate key errors on restart
+spring.sql.init.mode=never
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.show-sql=true
+spring.jpa.defer-datasource-initialization=true
+
+# CORS Configuration
+# (Handled in Controllers)

@@ -1,0 +1,12 @@
+{
+    "studentId": "TEST_STUDENT",
+    "items": [
+        {
+            "menuItem": {
+                "id": 133
+            },
+            "quantity": 1
+        }
+    ],
+    "totalAmount": 100
+}

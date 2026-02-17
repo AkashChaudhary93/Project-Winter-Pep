@@ -1,0 +1,4 @@
+Store: kahao piyo | Status: CLOSED | isOpen: False
+Store: buub | Status: OPEN | isOpen: True
+ID: 14 | Store: kahao piyo | Block: Block 34 (Main Cafeteria) | Status: CLOSED | isOpen: False
+ID: 15 | Store: buub | Block: Block 34 (Main Cafeteria) | Status: OPEN | isOpen: True
