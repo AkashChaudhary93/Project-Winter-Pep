@@ -71,12 +71,14 @@ export const CartProvider = ({ children }) => {
 
     const clearCart = () => setCart([]);
 
-    const toggleFavorite = (itemId) => {
-        setFavorites(prev =>
-            prev.includes(itemId)
-                ? prev.filter(id => id !== itemId)
-                : [...prev, itemId]
-        );
+    const toggleFavorite = (item) => {
+        setFavorites(prev => {
+            const exists = prev.find(i => i.id === item.id);
+            if (exists) {
+                return prev.filter(i => i.id !== item.id);
+            }
+            return [...prev, item];
+        });
     };
 
     const totalItems = cart.reduce((sum, i) => sum + i.quantity, 0);

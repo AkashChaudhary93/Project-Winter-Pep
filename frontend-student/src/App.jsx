@@ -12,6 +12,9 @@ import OrdersPage from './pages/OrdersPage';
 import OrderTracker from './pages/OrderTracker';
 import LoginPage from './pages/LoginPage';
 import OtpPage from './pages/OtpPage';
+import FavoritesPage from './pages/FavoritesPage';
+import AddressBookPage from './pages/AddressBookPage';
+import PaymentMethodsPage from './pages/PaymentMethodsPage';
 import BottomNav from './components/BottomNav';
 import CartDrawer from './components/CartDrawer';
 import Sidebar from './components/Sidebar';
@@ -57,7 +60,7 @@ const MainContent = () => {
             {/* Desktop Sidebar: Visible on md+ */}
             {showNav && <Sidebar />}
 
-            <Sidebar />
+
 
             <div className={`min-h-screen w-full transition-all duration-300 overflow-x-hidden ${showNav ? 'md:pl-72' : ''}`}>
                 <div className="max-w-7xl mx-auto min-h-screen relative">
@@ -98,6 +101,24 @@ const MainContent = () => {
                         <Route path="/orders" element={
                             <PrivateRoute>
                                 <OrdersPage />
+                            </PrivateRoute>
+                        } />
+
+                        <Route path="/favorites" element={
+                            <PrivateRoute>
+                                <FavoritesPage />
+                            </PrivateRoute>
+                        } />
+
+                        <Route path="/address" element={
+                            <PrivateRoute>
+                                <AddressBookPage />
+                            </PrivateRoute>
+                        } />
+
+                        <Route path="/payment" element={
+                            <PrivateRoute>
+                                <PaymentMethodsPage />
                             </PrivateRoute>
                         } />
 

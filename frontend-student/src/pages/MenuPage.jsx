@@ -83,7 +83,7 @@ const MenuPage = () => {
 
         let matchCategory = true;
         if (activeCategory === 'Favorites') {
-            matchCategory = favorites.includes(item.id);
+            matchCategory = favorites.some(fav => fav.id === item.id);
         } else if (activeCategory !== 'All') {
             matchCategory = (item.category || 'Other') === activeCategory;
         }
@@ -226,7 +226,7 @@ const MenuPage = () => {
                     ) : (
                         filteredMenu.map((item, index) => {
                             const qty = getItemQty(item.id);
-                            const isFav = favorites.includes(item.id);
+                            const isFav = favorites.some(fav => fav.id === item.id);
                             const gradient = FOOD_GRADIENTS[index % FOOD_GRADIENTS.length];
                             const emoji = FOOD_EMOJIS[index % FOOD_EMOJIS.length];
 
@@ -271,7 +271,7 @@ const MenuPage = () => {
 
                                             {/* Favorite button overlay */}
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
+                                                onClick={(e) => { e.stopPropagation(); toggleFavorite(item); }}
                                                 className={`absolute top-2.5 right-2.5 p-1.5 rounded-xl backdrop-blur-md transition-all active:scale-90 ${isFav
                                                     ? 'bg-red-500/20 text-red-500'
                                                     : (theme === 'dark' ? 'bg-stone-900/60 text-white/60 hover:text-red-400' : 'bg-white/80 text-stone-400 hover:text-red-400 shadow-sm')

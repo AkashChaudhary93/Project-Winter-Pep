@@ -188,10 +188,6 @@ const AppContent = () => {
             await axios.patch(`${API_URL}/${id}/status?status=${newStatus}`);
             if (newStatus === 'COMPLETED' || newStatus === 'REJECTED') {
                 setOrders(prev => prev.filter(o => o.id !== id));
-                // We don't decrease prevOrderCount here to avoid triggering "new order" logic if a new order replaces a finished one? 
-                // Actually, if we remove an order, length decreases. 
-                // Next fetch: sortedOrders.length might be same or less.
-                // We should update prevOrderCount to match current orders length so that next addition is detected.
                 setPrevOrderCount(prev => prev - 1);
             }
         } catch (error) {
@@ -200,11 +196,17 @@ const AppContent = () => {
         }
     };
 
+    // Called after verify-pickup succeeds (order already completed on backend)
+    const handlePickupVerified = (id) => {
+        setOrders(prev => prev.filter(o => o.id !== id));
+        setPrevOrderCount(prev => prev - 1);
+    };
+
     return (
         <div
             onClick={initAudio}
             onTouchStart={initAudio}
-            className="min-h-screen font-sans antialiased pb-20 transition-colors duration-300 relative selection:bg-brand-500/30"
+            className="min-h-screen font-sans antialiased pb-28 md:pb-20 transition-colors duration-300 relative selection:bg-brand-500/30"
             style={{ backgroundColor: theme === 'dark' ? '#1c1917' : '#fafaf9', color: theme === 'dark' ? '#ffffff' : '#1c1917' }}
         >
             {/* Background Atmosphere */}
@@ -224,8 +226,8 @@ const AppContent = () => {
             />
 
             {/* ── Floating Glass Dock Navigation ── */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-700">
-                <div className={`flex items-center gap-1.5 p-2 rounded-[24px] shadow-2xl transition-all duration-300 backdrop-blur-xl border ${theme === 'dark' ? 'bg-stone-900/80 border-stone-800/50 shadow-black/50' : 'bg-white/80 border-white/50 shadow-stone-200/50'}`}>
+            <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md animate-in slide-in-from-bottom-10 fade-in duration-700">
+                <div className={`flex items-center justify-between gap-1 p-1.5 md:p-2 rounded-[24px] shadow-2xl transition-all duration-300 backdrop-blur-xl border overflow-x-auto no-scrollbar ${theme === 'dark' ? 'bg-stone-900/80 border-stone-800/50 shadow-black/50' : 'bg-white/80 border-white/50 shadow-stone-200/50'}`}>
                     {[
                         { id: 'live', icon: ChefHat, label: 'Kitchen', color: 'text-orange-500', activeBg: 'bg-orange-500', activeShadow: 'shadow-orange-500/30' },
                         { id: 'menu', icon: List, label: 'Menu', color: 'text-blue-500', activeBg: 'bg-blue-500', activeShadow: 'shadow-blue-500/30' },
@@ -236,7 +238,7 @@ const AppContent = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`relative group flex flex-col items-center justify-center w-16 h-14 md:w-20 md:h-16 rounded-[18px] transition-all duration-300 ${activeTab === tab.id
+                            className={`relative flex-1 group flex flex-col items-center justify-center min-w-[60px] md:min-w-[72px] h-14 md:h-16 rounded-[18px] transition-all duration-300 ${activeTab === tab.id
                                 ? `${tab.activeBg} text-white shadow-lg ${tab.activeShadow} scale-105 -translate-y-1`
                                 : 'text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-600 dark:hover:text-stone-300'
                                 }`}
@@ -253,7 +255,7 @@ const AppContent = () => {
                 </div>
             </div>
 
-            <main className="px-6 max-w-7xl mx-auto pt-8">
+            <main className="px-4 md:px-6 max-w-7xl mx-auto pt-8">
                 {activeTab === 'live' && (
                     loading ? (
                         <div className="flex justify-center items-center h-64">
@@ -262,66 +264,69 @@ const AppContent = () => {
                     ) : (
                         <>
                             {/* ── Elite Quick Stats ── */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className={`p-4 rounded-[24px] border relative overflow-hidden group ${theme === 'dark' ? 'bg-stone-900/60 border-stone-800' : 'bg-white/60 border-white/60 shadow-sm'}`}>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Pending</p>
-                                            <h3 className={`text-3xl font-black ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => o.status === 'PENDING').length}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6 pt-4 md:pt-0 mb-6 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className={`px-5 py-4 md:p-6 rounded-[28px] md:rounded-[32px] border relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-500 ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800/80 hover:shadow-[0_8px_30px_rgb(249,115,22,0.1)]' : 'bg-white/60 backdrop-blur-md border-white/80 hover:shadow-[0_8px_40px_rgb(0,0,0,0.06)] shadow-[0_2px_10px_rgb(0,0,0,0.02)]'}`}>
+                                    <div className={`absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-orange-500 to-amber-400 opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+                                    <div className="flex justify-between items-start relative z-10 pt-1 md:pt-2 gap-2">
+                                        <div className="min-w-0">
+                                            <p className={`text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] mb-0.5 md:mb-2 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Pending</p>
+                                            <h3 className={`text-3xl md:text-4xl font-black tabular-nums tracking-tight leading-none ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => o.status === 'PENDING').length}</h3>
                                         </div>
-                                        <div className={`p-2 rounded-xl ${theme === 'dark' ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                                            <ClipboardList size={20} />
-                                        </div>
-                                    </div>
-                                    <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                                </div>
-
-                                <div className={`p-4 rounded-[24px] border relative overflow-hidden group ${theme === 'dark' ? 'bg-stone-900/60 border-stone-800' : 'bg-white/60 border-white/60 shadow-sm'}`}>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Cooking</p>
-                                            <h3 className={`text-3xl font-black ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => ['ACCEPTED', 'COOKING'].includes(o.status)).length}</h3>
-                                        </div>
-                                        <div className={`p-2 rounded-xl ${theme === 'dark' ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                                            <ChefHat size={20} />
+                                        <div className={`p-2.5 md:p-3.5 rounded-2xl flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-6 ${theme === 'dark' ? 'bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20' : 'bg-orange-50 text-orange-500 ring-1 ring-orange-100'}`}>
+                                            <ClipboardList size={22} strokeWidth={2.5} className="w-5 h-5 md:w-[22px] md:h-[22px]" />
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                                 </div>
 
-                                <div className={`p-4 rounded-[24px] border relative overflow-hidden group ${theme === 'dark' ? 'bg-stone-900/60 border-stone-800' : 'bg-white/60 border-white/60 shadow-sm'}`}>
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div>
-                                            <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Ready</p>
-                                            <h3 className={`text-3xl font-black ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => o.status === 'READY').length}</h3>
+                                <div className={`px-5 py-4 md:p-6 rounded-[28px] md:rounded-[32px] border relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-500 ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800/80 hover:shadow-[0_8px_30px_rgb(59,130,246,0.1)]' : 'bg-white/60 backdrop-blur-md border-white/80 hover:shadow-[0_8px_40px_rgb(0,0,0,0.06)] shadow-[0_2px_10px_rgb(0,0,0,0.02)]'}`}>
+                                    <div className={`absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-blue-500 to-indigo-400 opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+                                    <div className="flex justify-between items-start relative z-10 pt-1 md:pt-2 gap-2">
+                                        <div className="min-w-0">
+                                            <p className={`text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] mb-0.5 md:mb-2 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Cooking</p>
+                                            <h3 className={`text-3xl md:text-4xl font-black tabular-nums tracking-tight leading-none ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => ['ACCEPTED', 'COOKING'].includes(o.status)).length}</h3>
                                         </div>
-                                        <div className={`p-2 rounded-xl ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                                            <ShoppingBag size={20} />
+                                        <div className={`p-2.5 md:p-3.5 rounded-2xl flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-6 ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20' : 'bg-blue-50 text-blue-500 ring-1 ring-blue-100'}`}>
+                                            <ChefHat size={22} strokeWidth={2.5} className="w-5 h-5 md:w-[22px] md:h-[22px]" />
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-green-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                                 </div>
 
-                                <div className={`p-1 rounded-[24px] border flex items-center justify-center gap-1 ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800' : 'bg-white/40 border-stone-200'}`}>
+                                <div className={`px-5 py-4 md:p-6 rounded-[28px] md:rounded-[32px] border relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-500 ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800/80 hover:shadow-[0_8px_30px_rgb(34,197,94,0.1)]' : 'bg-white/60 backdrop-blur-md border-white/80 hover:shadow-[0_8px_40px_rgb(0,0,0,0.06)] shadow-[0_2px_10px_rgb(0,0,0,0.02)]'}`}>
+                                    <div className={`absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-green-500 to-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+                                    <div className="flex justify-between items-start relative z-10 pt-1 md:pt-2 gap-2">
+                                        <div className="min-w-0">
+                                            <p className={`text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] mb-0.5 md:mb-2 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Ready</p>
+                                            <h3 className={`text-3xl md:text-4xl font-black tabular-nums tracking-tight leading-none ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{orders.filter(o => o.status === 'READY').length}</h3>
+                                        </div>
+                                        <div className={`p-2.5 md:p-3.5 rounded-2xl flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-6 ${theme === 'dark' ? 'bg-green-500/10 text-green-400 ring-1 ring-green-500/20' : 'bg-green-50 text-green-500 ring-1 ring-green-100'}`}>
+                                            <ShoppingBag size={22} strokeWidth={2.5} className="w-5 h-5 md:w-[22px] md:h-[22px]" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                                </div>
+
+                                <div className={`p-1.5 md:p-2 rounded-[28px] md:rounded-[32px] border ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800/80 shadow-[0_4px_20px_rgb(0,0,0,0.1)]' : 'bg-white/60 backdrop-blur-md border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'} flex items-stretch gap-1.5 md:gap-2`}>
                                     <button
                                         onClick={() => setViewMode('board')}
-                                        className={`flex-1 h-full rounded-[20px] flex flex-col items-center justify-center gap-1 transition-all duration-300 ${viewMode === 'board'
-                                            ? (theme === 'dark' ? 'bg-stone-800 text-white shadow-lg' : 'bg-white text-stone-900 shadow-lg')
-                                            : 'text-stone-400 hover:text-stone-600'
+                                        className={`flex-1 rounded-[24px] flex py-3 md:py-0 flex-col items-center justify-center gap-1.5 md:gap-2 transition-all duration-500 ${viewMode === 'board'
+                                            ? (theme === 'dark' ? 'bg-stone-800 text-white shadow-md ring-1 ring-stone-700' : 'bg-white text-stone-900 shadow-[0_4px_20px_rgb(0,0,0,0.06)] ring-1 ring-stone-100/50')
+                                            : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
                                             }`}
                                     >
-                                        <LayoutGrid size={20} />
-                                        <span className="text-[10px] font-black uppercase">Board</span>
+                                        <LayoutGrid size={22} strokeWidth={viewMode === 'board' ? 2.5 : 2} className="w-5 h-5 md:w-[22px] md:h-[22px]" />
+                                        <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest">Board</span>
                                     </button>
                                     <button
                                         onClick={() => setViewMode('list')}
-                                        className={`flex-1 h-full rounded-[20px] flex flex-col items-center justify-center gap-1 transition-all duration-300 ${viewMode === 'list'
-                                            ? (theme === 'dark' ? 'bg-stone-800 text-white shadow-lg' : 'bg-white text-stone-900 shadow-lg')
-                                            : 'text-stone-400 hover:text-stone-600'
+                                        className={`flex-1 rounded-[24px] flex py-3 md:py-0 flex-col items-center justify-center gap-1.5 md:gap-2 transition-all duration-500 ${viewMode === 'list'
+                                            ? (theme === 'dark' ? 'bg-stone-800 text-white shadow-md ring-1 ring-stone-700' : 'bg-white text-stone-900 shadow-[0_4px_20px_rgb(0,0,0,0.06)] ring-1 ring-stone-100/50')
+                                            : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
                                             }`}
                                     >
-                                        <List size={20} />
-                                        <span className="text-[10px] font-black uppercase">List</span>
+                                        <List size={22} strokeWidth={viewMode === 'list' ? 2.5 : 2} className="w-5 h-5 md:w-[22px] md:h-[22px]" />
+                                        <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest">List</span>
                                     </button>
                                 </div>
                             </div>
@@ -334,35 +339,41 @@ const AppContent = () => {
                                         <div className="flex flex-col gap-6 h-full">
                                             <div
                                                 onClick={() => setSelectedSection(selectedSection === 'NEW' ? null : 'NEW')}
-                                                className={`relative overflow-hidden flex items-center justify-between p-6 rounded-[32px] cursor-pointer transition-all duration-300 group
-                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/60' : 'bg-white/60 border border-white/60 hover:bg-white/80 shadow-sm hover:shadow-md'} 
-                                                ${selectedSection === 'NEW' ? 'ring-2 ring-orange-500 ring-offset-4 ring-offset-[#fafaf9] dark:ring-offset-[#1c1917]' : ''}`}
+                                                className={`relative overflow-hidden flex items-center justify-between p-5 rounded-[28px] cursor-pointer transition-all duration-500 group
+                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/50' : 'bg-white/50 border border-white hover:bg-white/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]'} backdrop-blur-xl
+                                                ${selectedSection === 'NEW' ? 'ring-2 ring-orange-400/50 shadow-[0_0_30px_rgba(249,115,22,0.1)]' : ''}`}
                                             >
+                                                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-400 opacity-80`}></div>
+                                                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
                                                 <div className="flex items-center gap-4 z-10">
-                                                    <div className={`p-4 rounded-[20px] ${theme === 'dark' ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                                                        <ClipboardList size={24} />
+                                                    <div className={`p-3.5 rounded-[18px] transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 ${theme === 'dark' ? 'bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20' : 'bg-orange-50 text-orange-500 ring-1 ring-orange-100'}`}>
+                                                        <ClipboardList size={20} strokeWidth={2.5} />
                                                     </div>
                                                     <div>
                                                         <h2 className={`font-black text-xl tracking-tight ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>New Orders</h2>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
-                                                            <span className={`text-[10px] font-black uppercase tracking-wider ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Awaiting Action</span>
+                                                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Awaiting Action</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl transition-colors ${theme === 'dark' ? 'bg-orange-500 text-white' : 'bg-orange-500 text-white shadow-lg shadow-orange-200'}`}>
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl tabular-nums transition-all group-hover:scale-110 ${theme === 'dark' ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20' : 'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200'}`}>
                                                     {orders.filter(o => o.status === 'PENDING').length}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4 min-h-[400px]">
+                                            <div className="space-y-4 min-h-[250px] md:min-h-[400px]">
                                                 {orders.filter(o => o.status === 'PENDING').map(order => (
-                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} />
+                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} onPickupVerified={handlePickupVerified} />
                                                 ))}
                                                 {orders.filter(o => o.status === 'PENDING').length === 0 && (
-                                                    <div className={`flex flex-col items-center justify-center h-64 rounded-[32px] border-2 border-dashed transition-colors ${theme === 'dark' ? 'border-stone-800 bg-stone-900/20' : 'border-stone-200/50 bg-stone-50/50'}`}>
-                                                        <ClipboardList size={40} className={`mb-4 ${theme === 'dark' ? 'text-stone-700' : 'text-stone-300'}`} />
-                                                        <p className={`font-black text-sm ${theme === 'dark' ? 'text-stone-600' : 'text-stone-400'}`}>No new orders</p>
+                                                    <div className={`flex flex-col items-center justify-center p-6 md:p-8 min-h-[200px] md:min-h-[300px] rounded-[32px] border transition-all duration-500 ${theme === 'dark' ? 'border-stone-800/30 bg-stone-900/10' : 'border-stone-100/50 bg-stone-50/20 backdrop-blur-sm'}`}>
+                                                        <div className={`relative p-5 rounded-[24px] mb-4 ${theme === 'dark' ? 'bg-stone-800/30' : 'bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)]'}`}>
+                                                            <div className="absolute inset-0 bg-orange-500/5 rounded-[24px] blur-md"></div>
+                                                            <ClipboardList size={32} className={`relative z-10 w-8 h-8 md:w-10 md:h-10 ${theme === 'dark' ? 'text-stone-600' : 'text-stone-300'}`} />
+                                                        </div>
+                                                        <p className={`font-black text-xs md:text-sm tracking-wide ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>No new orders</p>
+                                                        <p className={`text-[10px] md:text-[11px] mt-1.5 font-medium tracking-wider uppercase ${theme === 'dark' ? 'text-stone-700' : 'text-stone-400/70'}`}>Orders will appear here</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -374,35 +385,41 @@ const AppContent = () => {
                                         <div className="flex flex-col gap-6 h-full">
                                             <div
                                                 onClick={() => setSelectedSection(selectedSection === 'PROGRESS' ? null : 'PROGRESS')}
-                                                className={`relative overflow-hidden flex items-center justify-between p-6 rounded-[32px] cursor-pointer transition-all duration-300 group
-                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/60' : 'bg-white/60 border border-white/60 hover:bg-white/80 shadow-sm hover:shadow-md'}
-                                                ${selectedSection === 'PROGRESS' ? 'ring-2 ring-blue-500 ring-offset-4 ring-offset-[#fafaf9] dark:ring-offset-[#1c1917]' : ''}`}
+                                                className={`relative overflow-hidden flex items-center justify-between p-5 rounded-[28px] cursor-pointer transition-all duration-500 group
+                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/50' : 'bg-white/50 border border-white hover:bg-white/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]'} backdrop-blur-xl
+                                                ${selectedSection === 'PROGRESS' ? 'ring-2 ring-blue-400/50 shadow-[0_0_30px_rgba(59,130,246,0.1)]' : ''}`}
                                             >
+                                                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-400 opacity-80`}></div>
+                                                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
                                                 <div className="flex items-center gap-4 z-10">
-                                                    <div className={`p-4 rounded-[20px] ${theme === 'dark' ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                                                        <ChefHat size={24} />
+                                                    <div className={`p-3.5 rounded-[18px] transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20' : 'bg-blue-50 text-blue-500 ring-1 ring-blue-100'}`}>
+                                                        <ChefHat size={20} strokeWidth={2.5} />
                                                     </div>
                                                     <div>
                                                         <h2 className={`font-black text-xl tracking-tight ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>In Kitchen</h2>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                                                            <span className={`text-[10px] font-black uppercase tracking-wider ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Cooking Now</span>
+                                                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Cooking Now</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl transition-colors ${theme === 'dark' ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white shadow-lg shadow-blue-200'}`}>
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl tabular-nums transition-all group-hover:scale-110 ${theme === 'dark' ? 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/20' : 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-200'}`}>
                                                     {orders.filter(o => ['ACCEPTED', 'COOKING'].includes(o.status)).length}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4 min-h-[400px]">
+                                            <div className="space-y-4 min-h-[250px] md:min-h-[400px]">
                                                 {orders.filter(o => ['ACCEPTED', 'COOKING'].includes(o.status)).map(order => (
-                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} />
+                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} onPickupVerified={handlePickupVerified} />
                                                 ))}
                                                 {orders.filter(o => ['ACCEPTED', 'COOKING'].includes(o.status)).length === 0 && (
-                                                    <div className={`flex flex-col items-center justify-center h-64 rounded-[32px] border-2 border-dashed transition-colors ${theme === 'dark' ? 'border-stone-800 bg-stone-900/20' : 'border-stone-200/50 bg-stone-50/50'}`}>
-                                                        <ChefHat size={40} className={`mb-4 ${theme === 'dark' ? 'text-stone-700' : 'text-stone-300'}`} />
-                                                        <p className={`font-black text-sm ${theme === 'dark' ? 'text-stone-600' : 'text-stone-400'}`}>Kitchen idle</p>
+                                                    <div className={`flex flex-col items-center justify-center p-6 md:p-8 min-h-[200px] md:min-h-[300px] rounded-[32px] border transition-all duration-500 ${theme === 'dark' ? 'border-stone-800/30 bg-stone-900/10' : 'border-stone-100/50 bg-stone-50/20 backdrop-blur-sm'}`}>
+                                                        <div className={`relative p-5 rounded-[24px] mb-4 ${theme === 'dark' ? 'bg-stone-800/30' : 'bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)]'}`}>
+                                                            <div className="absolute inset-0 bg-blue-500/5 rounded-[24px] blur-md"></div>
+                                                            <ChefHat size={32} className={`relative z-10 w-8 h-8 md:w-10 md:h-10 ${theme === 'dark' ? 'text-stone-600' : 'text-stone-300'}`} />
+                                                        </div>
+                                                        <p className={`font-black text-xs md:text-sm tracking-wide ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Kitchen idle</p>
+                                                        <p className={`text-[10px] md:text-[11px] mt-1.5 font-medium tracking-wider uppercase ${theme === 'dark' ? 'text-stone-700' : 'text-stone-400/70'}`}>Cooking orders appear here</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -414,35 +431,41 @@ const AppContent = () => {
                                         <div className="flex flex-col gap-6 h-full">
                                             <div
                                                 onClick={() => setSelectedSection(selectedSection === 'READY' ? null : 'READY')}
-                                                className={`relative overflow-hidden flex items-center justify-between p-6 rounded-[32px] cursor-pointer transition-all duration-300 group
-                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/60' : 'bg-white/60 border border-white/60 hover:bg-white/80 shadow-sm hover:shadow-md'}
-                                                ${selectedSection === 'READY' ? 'ring-2 ring-green-500 ring-offset-4 ring-offset-[#fafaf9] dark:ring-offset-[#1c1917]' : ''}`}
+                                                className={`relative overflow-hidden flex items-center justify-between p-5 rounded-[28px] cursor-pointer transition-all duration-500 group
+                                                ${theme === 'dark' ? 'bg-stone-900/40 border border-stone-800 hover:bg-stone-800/50' : 'bg-white/50 border border-white hover:bg-white/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]'} backdrop-blur-xl
+                                                ${selectedSection === 'READY' ? 'ring-2 ring-green-400/50 shadow-[0_0_30px_rgba(34,197,94,0.1)]' : ''}`}
                                             >
+                                                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-400 opacity-80`}></div>
+                                                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-gradient-to-br from-green-500/10 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
                                                 <div className="flex items-center gap-4 z-10">
-                                                    <div className={`p-4 rounded-[20px] ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                                                        <ShoppingBag size={24} />
+                                                    <div className={`p-3.5 rounded-[18px] transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 ${theme === 'dark' ? 'bg-green-500/10 text-green-400 ring-1 ring-green-500/20' : 'bg-green-50 text-green-500 ring-1 ring-green-100'}`}>
+                                                        <ShoppingBag size={20} strokeWidth={2.5} />
                                                     </div>
                                                     <div>
                                                         <h2 className={`font-black text-xl tracking-tight ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>Ready</h2>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                                            <span className={`text-[10px] font-black uppercase tracking-wider ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>For Pickup</span>
+                                                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>For Pickup</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl transition-colors ${theme === 'dark' ? 'bg-green-500 text-white' : 'bg-green-500 text-white shadow-lg shadow-green-200'}`}>
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl tabular-nums transition-all group-hover:scale-110 ${theme === 'dark' ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/20' : 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200'}`}>
                                                     {orders.filter(o => o.status === 'READY').length}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4 min-h-[400px]">
+                                            <div className="space-y-4 min-h-[250px] md:min-h-[400px]">
                                                 {orders.filter(o => o.status === 'READY').map(order => (
-                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} />
+                                                    <OrderCard key={order.id} order={order} onStatusUpdate={handleStatusUpdate} onPickupVerified={handlePickupVerified} />
                                                 ))}
                                                 {orders.filter(o => o.status === 'READY').length === 0 && (
-                                                    <div className={`flex flex-col items-center justify-center h-64 rounded-[32px] border-2 border-dashed transition-colors ${theme === 'dark' ? 'border-stone-800 bg-stone-900/20' : 'border-stone-200/50 bg-stone-50/50'}`}>
-                                                        <ShoppingBag size={40} className={`mb-4 ${theme === 'dark' ? 'text-stone-700' : 'text-stone-300'}`} />
-                                                        <p className={`font-black text-sm ${theme === 'dark' ? 'text-stone-600' : 'text-stone-400'}`}>All picked up</p>
+                                                    <div className={`flex flex-col items-center justify-center p-6 md:p-8 min-h-[200px] md:min-h-[300px] rounded-[32px] border transition-all duration-500 ${theme === 'dark' ? 'border-stone-800/30 bg-stone-900/10' : 'border-stone-100/50 bg-stone-50/20 backdrop-blur-sm'}`}>
+                                                        <div className={`relative p-5 rounded-[24px] mb-4 ${theme === 'dark' ? 'bg-stone-800/30' : 'bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)]'}`}>
+                                                            <div className="absolute inset-0 bg-green-500/5 rounded-[24px] blur-md"></div>
+                                                            <ShoppingBag size={32} className={`relative z-10 w-8 h-8 md:w-10 md:h-10 ${theme === 'dark' ? 'text-stone-600' : 'text-stone-300'}`} />
+                                                        </div>
+                                                        <p className={`font-black text-xs md:text-sm tracking-wide ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>All picked up</p>
+                                                        <p className={`text-[10px] md:text-[11px] mt-1.5 font-medium tracking-wider uppercase ${theme === 'dark' ? 'text-stone-700' : 'text-stone-400/70'}`}>Ready orders appear here</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -521,9 +544,6 @@ const AppContent = () => {
                                                                     )}
                                                                     {order.status === 'COOKING' && (
                                                                         <button onClick={() => handleStatusUpdate(order.id, 'READY')} className="px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-black hover:bg-green-700 shadow-lg shadow-green-500/20 transition-all active:scale-95">✅ Mark Ready</button>
-                                                                    )}
-                                                                    {order.status === 'READY' && (
-                                                                        <button onClick={() => handleStatusUpdate(order.id, 'COMPLETED')} className="px-4 py-2 rounded-xl bg-stone-100 text-stone-600 text-xs font-black hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700 transition-colors">Complete</button>
                                                                     )}
                                                                 </div>
                                                             </td>

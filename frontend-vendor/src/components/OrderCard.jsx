@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import { ChefHat, CheckCircle, Clock, X, Check, ShoppingBag, Coffee } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const OrderCard = ({ order, onStatusUpdate }) => {
+const API_BASE = 'http://localhost:9999';
+
+const OrderCard = ({ order, onStatusUpdate, onPickupVerified }) => {
     const { theme } = useTheme();
+    const [verifyingId, setVerifyingId] = useState(null);
+    const [codeInput, setCodeInput] = useState('');
+    const [codeError, setCodeError] = useState('');
+    const [verifying, setVerifying] = useState(false);
+
+    const handleVerifyPickup = async () => {
+        if (codeInput.length !== 4) {
+            setCodeError('Enter 4-digit code');
+            return;
+        }
+        setVerifying(true);
+        setCodeError('');
+        try {
+            await axios.post(`${API_BASE}/orders/${order.id}/verify-pickup?code=${codeInput}`);
+            setVerifyingId(null);
+            setCodeInput('');
+            // Use dedicated callback to avoid hitting the blocked PATCH endpoint
+            if (onPickupVerified) {
+                onPickupVerified(order.id);
+            }
+        } catch (err) {
+            setCodeError(err.response?.data?.error || 'Invalid code');
+        } finally {
+            setVerifying(false);
+        }
+    };
 
     const statusStyles = {
         PENDING: {
@@ -188,12 +217,57 @@ const OrderCard = ({ order, onStatusUpdate }) => {
                 )}
 
                 {order.status === 'READY' && (
-                    <button
-                        onClick={() => onStatusUpdate(order.id, 'COMPLETED')}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
-                    >
-                        <CheckCircle size={18} strokeWidth={2.5} /> Verify Pickup
-                    </button>
+                    <div className="w-full space-y-3">
+                        {verifyingId === order.id ? (
+                            <>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        maxLength={4}
+                                        value={codeInput}
+                                        onChange={(e) => { setCodeInput(e.target.value.replace(/\D/g, '')); setCodeError(''); }}
+                                        placeholder="4-digit code"
+                                        autoFocus
+                                        className={`flex-1 text-center text-2xl font-black tracking-[0.5em] py-3 rounded-2xl outline-none border-2 transition-all ${codeError
+                                            ? 'border-red-500 bg-red-500/5 text-red-500'
+                                            : theme === 'dark'
+                                                ? 'bg-stone-800 text-white border-stone-700 focus:border-green-500'
+                                                : 'bg-stone-50 text-stone-900 border-stone-200 focus:border-green-500'
+                                            }`}
+                                    />
+                                </div>
+                                {codeError && (
+                                    <p className="text-red-500 text-[11px] font-black text-center uppercase tracking-wider">{codeError}</p>
+                                )}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => { setVerifyingId(null); setCodeInput(''); setCodeError(''); }}
+                                        className={`flex-1 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] transition-all active:scale-95 border ${theme === 'dark'
+                                            ? 'bg-transparent text-stone-500 border-stone-800 hover:bg-stone-800'
+                                            : 'bg-white text-stone-400 border-stone-100 shadow-sm hover:bg-stone-50'}`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleVerifyPickup}
+                                        disabled={verifying || codeInput.length !== 4}
+                                        className={`flex-[2] py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 ${verifying || codeInput.length !== 4
+                                            ? 'bg-stone-400 text-white cursor-not-allowed opacity-60'
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02]'}`}
+                                    >
+                                        {verifying ? 'Verifying...' : <><CheckCircle size={16} strokeWidth={3} /> Confirm Pickup</>}
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setVerifyingId(order.id)}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle size={18} strokeWidth={2.5} /> Verify Pickup Code
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {(order.status === 'COMPLETED' || order.status === 'REJECTED') && (

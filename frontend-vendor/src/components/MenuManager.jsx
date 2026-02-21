@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
     ChefHat,
     ToggleLeft,
+    Pencil,
     ToggleRight,
     Plus,
     X,
@@ -16,12 +17,16 @@ import {
     Sun,
     Info,
     AlertCircle,
-    SquareSlash
+    SquareSlash,
+    Upload,
+    ImagePlus,
+    Loader2
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:9999/menu';
+const API_BASE = 'http://localhost:9999';
 
 const MenuManager = () => {
     const { user } = useAuth();
@@ -31,15 +36,20 @@ const MenuManager = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
+    const [editingItem, setEditingItem] = useState(null);
 
-    // New Item Form State
+    // Form State (shared for create & edit)
     const [newItem, setNewItem] = useState({
         name: '',
         price: '',
         category: 'Main Course',
         veg: true,
-        image: ''
+        imageUrl: ''
     });
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (user?.shopName) {
@@ -83,27 +93,103 @@ const MenuManager = () => {
         }
     };
 
-    const handleAddItem = async (e) => {
+    const handleImageUpload = async (file) => {
+        if (!file || !file.type.startsWith('image/')) {
+            alert('Please select a valid image file');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image must be under 5MB');
+            return;
+        }
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await axios.post(`${API_BASE}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const url = res.data.url;
+            setNewItem(prev => ({ ...prev, imageUrl: `${API_BASE}${url}` }));
+            setImagePreview(URL.createObjectURL(file));
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('Failed to upload image');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) handleImageUpload(file);
+    };
+
+    const openEditModal = (item) => {
+        setEditingItem(item);
+        setNewItem({
+            name: item.name,
+            price: String(item.price),
+            category: item.category || 'Main Course',
+            veg: item.veg,
+            imageUrl: item.imageUrl || ''
+        });
+        setImagePreview(null);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingItem(null);
+        setNewItem({ name: '', price: '', category: 'Main Course', veg: true, imageUrl: '' });
+        setImagePreview(null);
+    };
+
+    const handleSubmitItem = async (e) => {
         e.preventDefault();
         if (!newItem.name || !newItem.price) return;
 
-        const payload = {
-            ...newItem,
-            price: parseFloat(newItem.price),
-            available: true,
-            location: user.block,
-            stallName: user.shopName,
-            category: newItem.category
-        };
-
-        try {
-            await axios.post(API_URL, payload);
-            setIsModalOpen(false);
-            setNewItem({ name: '', price: '', category: 'Main Course', veg: true, image: '' });
-            fetchMenu();
-        } catch (error) {
-            console.error("Error adding item:", error);
-            alert("Failed to add item");
+        if (editingItem) {
+            // Edit mode
+            const payload = {
+                name: newItem.name,
+                price: parseFloat(newItem.price),
+                category: newItem.category,
+                veg: newItem.veg,
+                imageUrl: newItem.imageUrl || null
+            };
+            try {
+                await axios.put(`${API_URL}/${editingItem.id}`, payload);
+                closeModal();
+                fetchMenu();
+            } catch (error) {
+                console.error("Error updating item:", error);
+                alert("Failed to update item");
+            }
+        } else {
+            // Create mode
+            const payload = {
+                name: newItem.name,
+                price: parseFloat(newItem.price),
+                category: newItem.category,
+                veg: newItem.veg,
+                imageUrl: newItem.imageUrl || null,
+                available: true,
+                location: user.block,
+                stallName: user.shopName
+            };
+            try {
+                await axios.post(API_URL, payload);
+                closeModal();
+                fetchMenu();
+            } catch (error) {
+                console.error("Error adding item:", error);
+                alert("Failed to add item");
+            }
         }
     };
 
@@ -147,7 +233,7 @@ const MenuManager = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => { setEditingItem(null); setNewItem({ name: '', price: '', category: 'Main Course', veg: true, imageUrl: '' }); setImagePreview(null); setIsModalOpen(true); }}
                     className="flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-6 py-4 rounded-2xl font-black shadow-xl shadow-brand-500/20 transition-all active:scale-95 group"
                 >
                     <Plus size={24} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -225,10 +311,16 @@ const MenuManager = () => {
                                 }`}></div>
 
                             <div className="flex justify-between items-start mb-8 relative z-10">
-                                <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center transition-transform duration-500 group-hover:rotate-6 ${theme === 'dark' ? 'bg-stone-800 text-white shadow-inner border border-stone-700' : 'bg-white text-brand-600 shadow-xl shadow-stone-200/50'
-                                    }`}>
-                                    {getCategoryIcon(item.category)}
-                                </div>
+                                {item.imageUrl ? (
+                                    <div className="w-16 h-16 rounded-[24px] overflow-hidden transition-transform duration-500 group-hover:scale-110 shadow-lg">
+                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center transition-transform duration-500 group-hover:rotate-6 ${theme === 'dark' ? 'bg-stone-800 text-white shadow-inner border border-stone-700' : 'bg-white text-brand-600 shadow-xl shadow-stone-200/50'
+                                        }`}>
+                                        {getCategoryIcon(item.category)}
+                                    </div>
+                                )}
 
                                 <div className="flex items-center gap-2">
                                     <button
@@ -239,11 +331,22 @@ const MenuManager = () => {
                                         {item.available ? <ToggleRight size={48} className="drop-shadow-md" /> : <ToggleLeft size={48} />}
                                     </button>
                                     <button
+                                        onClick={() => openEditModal(item)}
+                                        className={`p-3 rounded-2xl transition-all duration-300 ${theme === 'dark'
+                                            ? 'bg-stone-800/50 text-stone-600 hover:bg-brand-500/20 hover:text-brand-400'
+                                            : 'bg-stone-50 text-stone-400 hover:bg-brand-50 hover:text-brand-500'
+                                            }`}
+                                        title="Edit item"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+                                    <button
                                         onClick={() => deleteItem(item.id)}
                                         className={`p-3 rounded-2xl transition-all duration-300 ${theme === 'dark'
                                             ? 'bg-stone-800/50 text-stone-600 hover:bg-red-500/20 hover:text-red-400'
                                             : 'bg-stone-50 text-stone-400 hover:bg-red-50 hover:text-red-500'
                                             }`}
+                                        title="Delete item"
                                     >
                                         <Trash2 size={20} />
                                     </button>
@@ -292,21 +395,21 @@ const MenuManager = () => {
                 </div>
             )}
 
-            {/* ── Add Item Modal Redesigned ── */}
+            {/* ── Add/Edit Item Modal ── */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className={`w-full max-w-lg rounded-[48px] p-8 shadow-2xl relative overflow-hidden transition-all scale-100 animate-in zoom-in-95 duration-300 ${theme === 'dark' ? 'bg-stone-900 border border-stone-800' : 'bg-white'
-                        }`}>
+                    <div className={`w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide rounded-[48px] p-8 shadow-2xl relative transition-all scale-100 animate-in zoom-in-95 duration-300 ${theme === 'dark' ? 'bg-stone-900 border border-stone-800' : 'bg-white'
+                        }`} style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                         {/* Modal Background Decor */}
-                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-brand-500/10 to-transparent pointer-events-none"></div>
+                        <div className={`absolute top-0 left-0 w-full h-32 bg-gradient-to-b ${editingItem ? 'from-blue-500/10' : 'from-brand-500/10'} to-transparent pointer-events-none`}></div>
 
                         <div className="flex justify-between items-center mb-8 relative z-10">
                             <div>
-                                <h3 className={`text-3xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>Create Dish</h3>
-                                <p className="text-xs font-bold text-brand-500 uppercase tracking-widest mt-1">Add to your shop menu</p>
+                                <h3 className={`text-3xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>{editingItem ? 'Edit Dish' : 'Create Dish'}</h3>
+                                <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${editingItem ? 'text-blue-500' : 'text-brand-500'}`}>{editingItem ? 'Update your menu item' : 'Add to your shop menu'}</p>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(false)}
+                                onClick={closeModal}
                                 className={`p-4 rounded-[20px] transition-all duration-300 hover:rotate-90 active:scale-90 ${theme === 'dark' ? 'bg-stone-800 text-stone-500 hover:text-white' : 'bg-stone-100 text-stone-400 hover:text-stone-900'
                                     }`}
                             >
@@ -314,7 +417,7 @@ const MenuManager = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddItem} className="space-y-6 relative z-10">
+                        <form onSubmit={handleSubmitItem} className="space-y-6 relative z-10">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="col-span-2">
                                     <label className={`block text-[10px] font-black uppercase tracking-widest mb-3 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>
@@ -407,14 +510,82 @@ const MenuManager = () => {
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* ── Image Upload ── */}
+                                <div className="col-span-2">
+                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-3 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>
+                                        Product Photo <span className="normal-case font-bold tracking-normal text-stone-300 dark:text-stone-600">(optional)</span>
+                                    </label>
+
+                                    {imagePreview || newItem.imageUrl ? (
+                                        <div className={`flex items-center gap-4 p-3 rounded-[20px] border ${theme === 'dark' ? 'bg-stone-800/50 border-stone-700' : 'bg-stone-50 border-stone-100'}`}>
+                                            <div className="w-20 h-20 rounded-[16px] overflow-hidden flex-shrink-0 shadow-md">
+                                                <img
+                                                    src={imagePreview || newItem.imageUrl}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-sm font-bold truncate ${theme === 'dark' ? 'text-stone-300' : 'text-stone-700'}`}>Photo uploaded ✓</p>
+                                                <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>Click remove to change</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setImagePreview(null); setNewItem(prev => ({ ...prev, imageUrl: '' })); }}
+                                                className={`p-2.5 rounded-xl transition-all active:scale-90 ${theme === 'dark' ? 'bg-stone-700 text-red-400 hover:bg-red-500/20' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                                            onDragLeave={() => setDragOver(false)}
+                                            onDrop={handleDrop}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`h-40 rounded-[24px] border-2 border-dashed cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-3 ${dragOver
+                                                ? 'border-brand-500 bg-brand-500/10 scale-[1.02]'
+                                                : theme === 'dark'
+                                                    ? 'border-stone-700 bg-stone-800/30 hover:border-stone-600 hover:bg-stone-800/50'
+                                                    : 'border-stone-200 bg-stone-50/50 hover:border-brand-300 hover:bg-brand-50/30'
+                                                }`}
+                                        >
+                                            {uploading ? (
+                                                <Loader2 size={28} className="animate-spin text-brand-500" />
+                                            ) : (
+                                                <>
+                                                    <div className={`p-3 rounded-2xl ${theme === 'dark' ? 'bg-stone-700 text-stone-400' : 'bg-white text-stone-300 shadow-sm'}`}>
+                                                        <ImagePlus size={24} />
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className={`text-xs font-bold ${theme === 'dark' ? 'text-stone-400' : 'text-stone-500'}`}>
+                                                            <span className="text-brand-500 font-black">Click to upload</span> or drag & drop
+                                                        </p>
+                                                        <p className={`text-[10px] mt-1 ${theme === 'dark' ? 'text-stone-600' : 'text-stone-400'}`}>
+                                                            PNG, JPG, WEBP up to 5MB
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => { const f = e.target.files[0]; if (f) handleImageUpload(f); e.target.value = ''; }}
+                                    />
+                                </div>
                             </div>
 
                             <button
                                 type="submit"
-                                className="w-full bg-brand-500 hover:bg-brand-600 text-white p-5 rounded-[28px] font-black text-sm uppercase tracking-widest shadow-2xl shadow-brand-500/30 transition-all active:scale-[0.98] hover:shadow-brand-500/50 mt-4 flex items-center justify-center gap-2 group"
+                                className={`w-full ${editingItem ? 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/30 hover:shadow-blue-500/50' : 'bg-brand-500 hover:bg-brand-600 shadow-brand-500/30 hover:shadow-brand-500/50'} text-white p-5 rounded-[28px] font-black text-sm uppercase tracking-widest shadow-2xl transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2 group`}
                             >
-                                <Plus size={20} className="group-hover:rotate-180 transition-transform duration-500" />
-                                Publish to Menu
+                                {editingItem ? <Pencil size={18} className="group-hover:rotate-12 transition-transform duration-300" /> : <Plus size={20} className="group-hover:rotate-180 transition-transform duration-500" />}
+                                {editingItem ? 'Save Changes' : 'Publish to Menu'}
                             </button>
                         </form>
                     </div>

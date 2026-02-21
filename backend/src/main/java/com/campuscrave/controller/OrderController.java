@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import com.campuscrave.model.OrderItem;
 import java.util.stream.Collectors;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/orders")
@@ -153,21 +155,49 @@ public class OrderController {
         return orderRepository.findById(id).orElseThrow();
     }
 
-    // Update status (Kitchen action)
+    // Update status (Kitchen action) — blocks direct COMPLETED transition
     @PatchMapping("/{id}/status")
-    public Order updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {
         Order order = orderRepository.findById(id).orElseThrow();
+
+        // Block direct completion — must use verify-pickup endpoint
+        if (status == OrderStatus.COMPLETED) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", "Use /verify-pickup endpoint to complete orders")
+            );
+        }
+
         order.setStatus(status);
 
         if (status == OrderStatus.ACCEPTED && order.getAcceptedAt() == null) {
             order.setAcceptedAt(java.time.LocalDateTime.now());
         } else if (status == OrderStatus.READY && order.getReadyAt() == null) {
             order.setReadyAt(java.time.LocalDateTime.now());
-        } else if (status == OrderStatus.COMPLETED && order.getCompletedAt() == null) {
-            order.setCompletedAt(java.time.LocalDateTime.now());
         }
 
-        return orderRepository.save(order);
+        return ResponseEntity.ok(orderRepository.save(order));
+    }
+
+    // Verify pickup code and complete order
+    @PostMapping("/{id}/verify-pickup")
+    public ResponseEntity<?> verifyPickup(@PathVariable Long id, @RequestParam String code) {
+        Order order = orderRepository.findById(id).orElseThrow();
+
+        if (order.getStatus() != OrderStatus.READY) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", "Order is not ready for pickup")
+            );
+        }
+
+        if (!order.getPickupCode().equals(code)) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", "Invalid pickup code")
+            );
+        }
+
+        order.setStatus(OrderStatus.COMPLETED);
+        order.setCompletedAt(java.time.LocalDateTime.now());
+        return ResponseEntity.ok(orderRepository.save(order));
     }
 
     // Get completed and rejected orders (History)

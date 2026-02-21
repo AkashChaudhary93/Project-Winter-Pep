@@ -38,6 +38,19 @@ public class MenuController {
         return menuItemRepository.save(item);
     }
 
+    // Update menu item
+    @PutMapping("/{id}")
+    public MenuItem updateMenuItem(@PathVariable Long id, @RequestBody MenuItem updated) {
+        MenuItem item = menuItemRepository.findById(id).orElseThrow();
+        if (updated.getName() != null) item.setName(updated.getName());
+        if (updated.getPrice() != null) item.setPrice(updated.getPrice());
+        if (updated.getCategory() != null) item.setCategory(updated.getCategory());
+        item.setVeg(updated.isVeg());
+        // Allow setting imageUrl to null (to remove image)
+        item.setImageUrl(updated.getImageUrl());
+        return menuItemRepository.save(item);
+    }
+
     // Delete menu item
     @DeleteMapping("/{id}")
     public void deleteMenuItem(@PathVariable Long id) {

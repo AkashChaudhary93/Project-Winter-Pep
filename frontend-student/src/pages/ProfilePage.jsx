@@ -71,9 +71,9 @@ const ProfilePage = () => {
 
     const menuItems = [
         { icon: ShoppingBag, label: 'Order History', link: '/orders', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { icon: Heart, label: 'Your Favorites', link: '#', color: 'text-rose-500', bg: 'bg-rose-500/10' },
-        { icon: MapPin, label: 'Address Book', link: '#', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { icon: CreditCard, label: 'Payment Methods', link: '#', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { icon: Heart, label: 'Your Favorites', link: '/favorites', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { icon: MapPin, label: 'Address Book', link: '/address', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { icon: CreditCard, label: 'Payment Methods', link: '/payment', color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
     return (

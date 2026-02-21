@@ -212,6 +212,27 @@ const OrderTracker = () => {
                             </div>
                         </div>
 
+                        {/* ── Pickup Verification Code Card ── */}
+                        {order.status === 'READY' && order.pickupCode && (
+                            <div className={`relative p-8 rounded-[40px] overflow-hidden border text-center transition-all ${theme === 'dark' ? 'bg-stone-900/60 border-green-500/20 backdrop-blur-xl' : 'bg-white border-green-100 shadow-[0_20px_60px_rgba(0,0,0,0.04)]'}`}>
+                                {/* Green glow */}
+                                <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-[80px] opacity-20 bg-gradient-to-br from-green-400 to-emerald-500"></div>
+
+                                <div className="relative z-10">
+                                    <div className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] mb-4 px-4 py-1.5 rounded-full border ${theme === 'dark' ? 'text-green-400 border-green-500/20 bg-green-500/10' : 'text-green-600 border-green-100 bg-green-50'}`}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                                        Pickup Code
+                                    </div>
+                                    <div className={`text-6xl lg:text-7xl font-black tracking-[0.4em] leading-none mb-4 ${theme === 'dark' ? 'text-white' : 'text-stone-900'}`}>
+                                        {order.pickupCode}
+                                    </div>
+                                    <p className={`text-xs font-bold ${theme === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>
+                                        Show this code to the vendor to collect your order
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* ── Adaptive Status Pipeline (Alignment Fixed) ── */}
                         <div className={`p-8 md:p-10 rounded-[56px] border backdrop-blur-xl transition-all ${theme === 'dark' ? 'bg-stone-900/40 border-stone-800/50' : 'bg-white/80 border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)]'
                             }`}>

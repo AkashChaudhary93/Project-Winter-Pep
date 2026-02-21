@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
 
 @Entity
 @Table(name = "orders")
@@ -26,11 +27,17 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
 
+    private String pickupCode;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (status == null) {
             status = OrderStatus.PENDING;
+        }
+        // Auto-generate 4-digit pickup verification code
+        if (pickupCode == null) {
+            pickupCode = String.format("%04d", new Random().nextInt(10000));
         }
     }
 
@@ -100,4 +107,7 @@ public class Order {
 
     public String getReview() { return review; }
     public void setReview(String review) { this.review = review; }
+
+    public String getPickupCode() { return pickupCode; }
+    public void setPickupCode(String pickupCode) { this.pickupCode = pickupCode; }
 }

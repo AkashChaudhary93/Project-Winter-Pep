@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { ChefHat, Store, MapPin, Phone, KeyRound, ArrowRight, Loader2, Sparkles, Utensils, Zap } from 'lucide-react';
+import { ChefHat, Store, MapPin, Phone, KeyRound, ArrowRight, Loader2, Sparkles, Utensils, Zap, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const API_base = 'http://localhost:9999/auth';
@@ -21,7 +21,7 @@ const BLOCKS = [
 
 const LoginPage = () => {
     const { login } = useAuth();
-    const { theme } = useTheme();
+    const { theme, toggleTheme } = useTheme();
 
     const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
     const [step, setStep] = useState(1); // 1: Input, 2: OTP
@@ -92,8 +92,16 @@ const LoginPage = () => {
                 <div className={`absolute top-[40%] left-[40%] w-[400px] h-[400px] rounded-full blur-[100px] opacity-10 animate-pulse mix-blend-screen ${theme === 'dark' ? 'bg-amber-600' : 'bg-amber-400'}`}></div>
             </div>
 
+            {/* Theme Toggle */}
+            <button
+                onClick={toggleTheme}
+                className={`absolute top-6 right-6 z-50 p-3 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-stone-800 text-stone-400 hover:text-white hover:bg-stone-700' : 'bg-white text-stone-400 hover:text-brand-600 hover:shadow-lg'}`}
+            >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
             <div className={`w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 rounded-[48px] shadow-2xl border transition-all duration-500 overflow-hidden relative z-10 ${theme === 'dark'
-                ? 'bg-stone-900/60 border-stone-800 backdrop-blur-2xl shadow-black/50'
+                ? 'bg-stone-900/80 border-stone-800 backdrop-blur-2xl shadow-black/50'
                 : 'bg-white/70 border-white/60 backdrop-blur-2xl shadow-stone-200/50'
                 }`}>
 
@@ -357,6 +365,7 @@ const LoginPage = () => {
             </div>
         </div>
     );
+
 };
 
 export default LoginPage;
