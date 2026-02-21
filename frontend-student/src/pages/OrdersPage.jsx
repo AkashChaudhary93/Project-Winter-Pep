@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Clock, CheckCircle2, ChevronRight, Package, UtensilsCrossed, ChefHat, ShoppingBag, XCircle, Flame, Receipt, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const API_BASE = 'http://localhost:9999';
+const API_BASE = (import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}`);
 
 const STATUS_CONFIG = {
     PENDING: {

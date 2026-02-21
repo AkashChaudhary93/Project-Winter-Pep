@@ -23,7 +23,7 @@ const LocationPage = () => {
     useEffect(() => {
         const fetchStalls = async () => {
             try {
-                const res = await axios.get(`http://localhost:9999/users?role=VENDOR&block=${encodeURIComponent(locId)}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/users?role=VENDOR&block=${encodeURIComponent(locId)}`);
                 setStalls(res.data);
             } catch (error) {
                 console.error("Failed to fetch stalls", error);

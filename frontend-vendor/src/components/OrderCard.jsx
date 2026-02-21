@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ChefHat, CheckCircle, Clock, X, Check, ShoppingBag, Coffee } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const API_BASE = 'http://localhost:9999';
+const API_BASE = (import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}`);
 
 const OrderCard = ({ order, onStatusUpdate, onPickupVerified }) => {
     const { theme } = useTheme();

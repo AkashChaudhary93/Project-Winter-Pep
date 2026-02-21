@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const API_BASE = 'http://localhost:9999';
+const API_BASE = (import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}`);
 
 const CartPage = () => {
     const { cart, removeFromCart, addToCart, clearCart } = useCart();

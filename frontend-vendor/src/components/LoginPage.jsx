@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChefHat, Store, MapPin, Phone, KeyRound, ArrowRight, Loader2, Sparkles, Utensils, Zap, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const API_base = 'http://localhost:9999/auth';
+const API_base = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth`;
 
 const BLOCKS = [
     "Block 34 (Main Cafeteria)",

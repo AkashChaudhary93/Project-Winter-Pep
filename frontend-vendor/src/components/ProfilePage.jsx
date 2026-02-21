@@ -38,7 +38,7 @@ const ProfilePage = () => {
     const handleSave = async () => {
         setLoading(true);
         try {
-            const res = await axios.put(`http://localhost:9999/users/${user.id}`, {
+            const res = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/users/${user.id}`, {
                 name: formData.name,
                 shopName: formData.shopName,
                 block: formData.block

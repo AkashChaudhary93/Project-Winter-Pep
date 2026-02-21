@@ -12,8 +12,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/LoginPage';
 import ProfilePage from './components/ProfilePage';
 
-const API_URL = 'http://localhost:9999/orders';
-const SHOP_URL = 'http://localhost:9999/shop';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders`;
+const SHOP_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/shop`;
 
 const AppContent = () => {
     const [orders, setOrders] = useState([]);

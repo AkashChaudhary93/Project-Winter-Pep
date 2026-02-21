@@ -18,7 +18,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'http://localhost:9999/orders/stats';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders/stats`;
 
 const AnalyticsDashboard = () => {
     const [stats, setStats] = useState(null);

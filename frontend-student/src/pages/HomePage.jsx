@@ -5,7 +5,7 @@ import { MapPin, ArrowRight, Store, Clock, Sun, Moon, Utensils, Home, ShoppingBa
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const SHOP_URL = 'http://localhost:9999/shop';
+const SHOP_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/shop`;
 
 const locations = [
     { id: 'Block 34', name: 'Block 34', desc: 'Central Food Court', color: 'from-orange-500 via-red-500 to-rose-500', icon: Utensils, shadow: 'shadow-orange-500/25', popular: true },
@@ -25,7 +25,7 @@ const locations = [
     { id: 'UniHospital', name: 'UniHospital', desc: 'Medical Campus Dining', color: 'from-emerald-500 via-teal-500 to-cyan-500', icon: Coffee, shadow: 'shadow-emerald-500/25' },
 ];
 
-const API_URL = 'http://localhost:9999/orders';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders`;
 
 const getGreeting = () => {
     const hour = new Date().getHours();

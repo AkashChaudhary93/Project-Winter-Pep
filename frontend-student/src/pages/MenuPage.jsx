@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 
-const API_URL = 'http://localhost:9999/menu';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/menu`;
 
 // Rotating gradient palettes for food item placeholders
 const FOOD_GRADIENTS = [
@@ -43,7 +43,7 @@ const MenuPage = () => {
         try {
             const [menuRes, usersRes] = await Promise.all([
                 axios.get(API_URL),
-                axios.get('http://localhost:9999/shop/users')
+                axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/shop/users`)
             ]);
 
             const statusMap = {};
@@ -62,7 +62,7 @@ const MenuPage = () => {
             setLoading(false);
         }
 
-        axios.get('http://localhost:9999/orders/wait-time')
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders/wait-time`)
             .then(res => setWaitTime(res.data))
             .catch(err => console.error(err));
     };

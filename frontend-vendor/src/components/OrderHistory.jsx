@@ -16,7 +16,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'http://localhost:9999/orders/history';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders/history`;
 
 const OrderHistory = () => {
     const [orders, setOrders] = useState([]);

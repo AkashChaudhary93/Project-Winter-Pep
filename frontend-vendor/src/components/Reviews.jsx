@@ -5,7 +5,7 @@ import { Star, MessageSquare, ThumbsUp, Calendar, User } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'http://localhost:9999/orders/history';
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/orders/history`;
 
 const Reviews = () => {
     const [reviews, setReviews] = useState([]);

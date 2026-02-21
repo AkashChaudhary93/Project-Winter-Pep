@@ -15,7 +15,7 @@ const LoginPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:9999/auth/send-otp', { phoneNumber });
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth/send-otp`, { phoneNumber });
             // Pass the mode (isLogin) implicitly by what data we send? 
             // Actually AuthController just checks if name is present.
             // If isLogin is true, we send ONLY phone (name is empty string).
