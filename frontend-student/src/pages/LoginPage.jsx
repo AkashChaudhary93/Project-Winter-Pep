@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChefHat, ArrowRight } from 'lucide-react';
+import Toast from '../components/Toast';
 
 const LoginPage = () => {
     const [isLogin, setIsLogin] = useState(true); // Toggle state
@@ -9,30 +10,50 @@ const LoginPage = () => {
     const [name, setName] = useState('');
     const [registrationNumber, setRegistrationNumber] = useState('');
     const [loading, setLoading] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
     const navigate = useNavigate();
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
+            // Pre-flight check: Does the user exist?
+            const checkRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth/check-user`, { phoneNumber });
+            const userExists = checkRes.data.exists;
+
+            if (isLogin && !userExists) {
+                setToastMessage('User not found! Please Switch to SIGN UP to create an account first.');
+                setLoading(false);
+                return;
+            }
+
+            if (!isLogin && userExists) {
+                setToastMessage('Account already exists! Please Switch to LOGIN.');
+                setLoading(false);
+                return;
+            }
+
+            // If validation passes, proceed to send OTP
             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth/send-otp`, { phoneNumber });
-            // Pass the mode (isLogin) implicitly by what data we send? 
-            // Actually AuthController just checks if name is present.
-            // If isLogin is true, we send ONLY phone (name is empty string).
-            // If isLogin is false, we send ALL details.
+
+            // Pass the mode (isLogin) implicitly by what data we send
             const stateData = isLogin
                 ? { phoneNumber }
                 : { phoneNumber, name, registrationNumber };
 
             navigate('/otp', { state: stateData });
         } catch (error) {
-            alert('Failed to send OTP. Is the backend running?');
+            setToastMessage('Failed to send OTP or verify user. Is the backend running?');
+            console.error(error);
         }
         setLoading(false);
     };
 
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex flex-col items-center justify-center p-6 transition-colors duration-300">
+            {/* Custom Toast Notification */}
+            <Toast message={toastMessage} onClose={() => setToastMessage('')} />
+
             <div className="bg-white dark:bg-stone-800 p-8 rounded-[40px] shadow-xl w-full max-w-sm text-center transition-colors duration-300">
                 <div className="w-20 h-20 bg-brand-50 dark:bg-stone-700/50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-600 dark:text-brand-400">
                     <ChefHat size={40} />

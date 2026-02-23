@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { ChefHat, Store, MapPin, Phone, KeyRound, ArrowRight, Loader2, Sparkles, Utensils, Zap, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import Toast from './Toast';
 
 const API_base = `${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth`;
 
@@ -26,6 +27,7 @@ const LoginPage = () => {
     const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
     const [step, setStep] = useState(1); // 1: Input, 2: OTP
     const [loading, setLoading] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     // Form States
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -35,13 +37,31 @@ const LoginPage = () => {
     const [block, setBlock] = useState('');
 
     const sendOtp = async () => {
-        if (phoneNumber.length < 10) return alert("Enter valid phone number");
+        if (phoneNumber.length < 10) return setToastMessage("Enter valid phone number");
         setLoading(true);
         try {
+            // Pre-flight check: Does the user exist?
+            const checkRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:9999'}/auth/check-user`, { phoneNumber });
+            const userExists = checkRes.data.exists;
+
+            if (authMode === 'login' && !userExists) {
+                setToastMessage('Vendor not found! Please Switch to SIGN UP to register your shop first.');
+                setLoading(false);
+                return;
+            }
+
+            if (authMode === 'signup' && userExists) {
+                setToastMessage('Shop already registered! Please Switch to LOGIN.');
+                setLoading(false);
+                return;
+            }
+
+            // If validation passes, send the actual OTP
             await axios.post(`${API_base}/send-otp`, { phoneNumber });
             setStep(2);
         } catch (error) {
-            alert("Failed to send OTP. Is backend running?");
+            setToastMessage("Failed to send OTP or verify vendor. Is backend running?");
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -85,6 +105,9 @@ const LoginPage = () => {
     return (
         <div className={`min-h-screen flex items-center justify-center p-4 md:p-6 relative overflow-hidden transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0c0a09]' : 'bg-stone-50'
             }`}>
+            {/* Custom Toast Notification */}
+            <Toast message={toastMessage} onClose={() => setToastMessage('')} />
+
             {/* ── Dynamic Mesh Gradient Background ── */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className={`absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full blur-[140px] opacity-20 animate-blob mix-blend-screen ${theme === 'dark' ? 'bg-brand-600' : 'bg-brand-400'}`}></div>

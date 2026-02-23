@@ -21,6 +21,13 @@ public class AuthController {
     // Mock OTP Storage (In-Memory)
     private Map<String, String> otpStorage = new HashMap<>();
 
+    @PostMapping("/check-user")
+    public Map<String, Boolean> checkUser(@RequestBody Map<String, String> payload) {
+        String phoneNumber = payload.get("phoneNumber");
+        boolean exists = userRepository.findByPhoneNumber(phoneNumber).isPresent();
+        return Map.of("exists", exists);
+    }
+
     @PostMapping("/send-otp")
     public Map<String, String> sendOtp(@RequestBody Map<String, String> payload) {
         String phoneNumber = payload.get("phoneNumber");

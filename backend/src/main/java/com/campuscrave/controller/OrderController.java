@@ -35,7 +35,8 @@ public class OrderController {
             throw new RuntimeException("Only completed orders can be rated");
         }
 
-        Integer rating = (Integer) ratingData.get("rating");
+        Object ratingObj = ratingData.get("rating");
+        Integer rating = ratingObj != null ? ((Number) ratingObj).intValue() : 0;
         String review = (String) ratingData.get("review");
 
         order.setRating(rating);
@@ -46,10 +47,13 @@ public class OrderController {
             for (com.campuscrave.model.OrderItem orderItem : order.getItems()) {
                 com.campuscrave.model.MenuItem menuItem = orderItem.getMenuItem();
 
-                // Recalculate average
-                double currentTotal = menuItem.getAverageRating() * menuItem.getTotalRatings();
+                // Recalculate average safely (handle possible nulls in existing DB rows)
+                double avg = menuItem.getAverageRating() != null ? menuItem.getAverageRating() : 0.0;
+                int count = menuItem.getTotalRatings() != null ? menuItem.getTotalRatings() : 0;
+
+                double currentTotal = avg * count;
                 double newTotal = currentTotal + rating;
-                int newCount = menuItem.getTotalRatings() + 1;
+                int newCount = count + 1;
 
                 menuItem.setAverageRating(newTotal / newCount);
                 menuItem.setTotalRatings(newCount);
@@ -163,8 +167,7 @@ public class OrderController {
         // Block direct completion — must use verify-pickup endpoint
         if (status == OrderStatus.COMPLETED) {
             return ResponseEntity.badRequest().body(
-                Map.of("error", "Use /verify-pickup endpoint to complete orders")
-            );
+                    Map.of("error", "Use /verify-pickup endpoint to complete orders"));
         }
 
         order.setStatus(status);
@@ -185,14 +188,12 @@ public class OrderController {
 
         if (order.getStatus() != OrderStatus.READY) {
             return ResponseEntity.badRequest().body(
-                Map.of("error", "Order is not ready for pickup")
-            );
+                    Map.of("error", "Order is not ready for pickup"));
         }
 
         if (!order.getPickupCode().equals(code)) {
             return ResponseEntity.badRequest().body(
-                Map.of("error", "Invalid pickup code")
-            );
+                    Map.of("error", "Invalid pickup code"));
         }
 
         order.setStatus(OrderStatus.COMPLETED);
